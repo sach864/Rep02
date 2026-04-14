@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A-Level Exam Dashboard</title>
+  <style>
+    :root{
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --text:#1c1c1e;
+      --muted:#5c5c5e;
+      --muted2:#8e8e93;
+      --line:rgba(0,0,0,0.06);
+      --soft:#f5f7fb;
+
+      --math-bg:#e0f2fe; --math-text:#0c4a6e; --math-dot:#38bdf8;
+      --fm-bg:#ffe4e6; --fm-text:#881337; --fm-dot:#fb7185;
+      --econ-bg:#fef9c3; --econ-text:#854d0e; --econ-dot:#facc15;
+      --phys-bg:#f3e8ff; --phys-text:#6b21a8; --phys-dot:#c084fc;
+
+      --green1:#bbf7d0; --green2:#86efac; --green3:#4ade80;
+      --orange1:#fed7aa; --orange2:#fdba74; --orange3:#fb923c;
+      --red1:#fca5a5; --red2:#ef4444; --red3:#7f1d1d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{
+      max-width:1600px;
+      margin:0 auto;
+      padding:24px 16px 40px;
+    }
+    .top{
+      display:grid;
+      grid-template-columns:1.4fr 1fr;
+      gap:16px;
+      margin-bottom:24px;
+    }
+    .panel,.card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:28px;
+      box-shadow:0 1px 2px rgba(0,0,0,0.03);
+    }
+    .panel{padding:24px}
+    .eyebrow{
+      font-size:13px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:#3a3a3c;
+      margin-bottom:16px;
+    }
+    h1{
+      margin:0;
+      font-size:48px;
+      line-height:1.02;
+      font-weight:900;
+      letter-spacing:-0.03em;
+    }
+    .sub{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:16px;
+      font-weight:600;
+      max-width:820px;
+    }
+    .filters{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:22px;
+    }
+    .chip{
+      border:1px solid rgba(0,0,0,0.1);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:10px 16px;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .chip.active.math{background:var(--math-bg); color:var(--math-text)}
+    .chip.active.fm{background:var(--fm-bg); color:var(--fm-text)}
+    .chip.active.econ{background:var(--econ-bg); color:var(--econ-text)}
+    .chip.active.phys{background:var(--phys-bg); color:var(--phys-text)}
+    .chip.active.all{background:#fff}
+    .next-title{
+      font-size:14px;font-weight:800;color:#3a3a3c;margin-bottom:10px;
+    }
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 12px;border-radius:999px;border:1px solid transparent;
+      font-size:12px;font-weight:900;
+    }
+    .dot{width:10px;height:10px;border-radius:50%}
+    .math{background:var(--math-bg); color:var(--math-text); border-color:#bae6fd}
+    .fm{background:var(--fm-bg); color:var(--fm-text); border-color:#fecdd3}
+    .econ{background:var(--econ-bg); color:var(--econ-text); border-color:#fde68a}
+    .phys{background:var(--phys-bg); color:var(--phys-text); border-color:#e9d5ff}
+    .next-paper{margin:16px 0 0;font-size:32px;line-height:1.08;font-weight:900}
+    .meta{margin-top:12px;color:var(--muted);font-size:14px;font-weight:700}
+    .count-box{
+      margin-top:18px;background:var(--soft);border-radius:18px;padding:16px;
+    }
+    .count-label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#6e6e73}
+    .count-value{margin-top:4px;font-size:28px;font-weight:900}
+    .bar{
+      display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:16px;
+    }
+    .search,.reset{
+      background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,0.03);
+    }
+    .search{display:flex;align-items:center;padding:0 14px}
+    .search input{
+      width:100%;border:0;outline:none;background:transparent;padding:14px 0;
+      font-size:14px;font-weight:700;color:var(--text);
+    }
+    .reset{
+      padding:14px 16px;font-size:14px;font-weight:800;cursor:pointer;
+    }
+    .showing{margin-bottom:14px;font-size:14px;font-weight:800;color:#3a3a3c}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+    }
+    .card{
+      min-height:320px;
+      padding:24px;
+      display:flex;
+      gap:20px;
+    }
+    .scale-wrap{
+      flex:0 0 auto;
+      display:flex;
+      gap:10px;
+      user-select:none;
+    }
+    .scale{
+      position:relative;
+      width:20px;
+      height:148px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .rail{
+      position:absolute;
+      width:9px;height:100%;border-radius:999px;
+      box-shadow:0 0 0 6px rgba(0,0,0,0.02);
+    }
+    .rail.green{background:linear-gradient(to bottom,var(--green1),var(--green2),var(--green3)); box-shadow:0 0 0 6px rgba(52,211,153,.12)}
+    .rail.orange{background:linear-gradient(to bottom,var(--orange1),var(--orange2),var(--orange3)); box-shadow:0 0 0 6px rgba(251,146,60,.12)}
+    .rail.red{background:linear-gradient(to bottom,#fca5a5,#ef4444,#b91c1c); box-shadow:0 0 0 6px rgba(185,28,28,.12)}
+    .rail.darkred{background:linear-gradient(to bottom,#f87171,#dc2626,#7f1d1d); box-shadow:0 0 0 6px rgba(127,29,29,.15)}
+    .scale-point,.thumb{
+      position:absolute;left:50%;transform:translate(-50%,-50%);
+      border-radius:999px;border:0;background:none;cursor:pointer;
+    }
+    .scale-point{width:24px;height:24px}
+    .scale-point span{
+      display:block;width:10px;height:10px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.8);background:rgba(255,255,255,.95);
+      margin:auto;
+    }
+    .thumb{
+      width:32px;height:32px;border:2px solid rgba(255,255,255,.55);
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;
+      pointer-events:none;
+    }
+    .thumb.green{background:#10b981}
+    .thumb.orange{background:#f97316}
+    .thumb.red{background:#b91c1c}
+    .thumb.darkred{background:#7f1d1d}
+    .scale-labels{
+      height:148px;display:flex;flex-direction:column;justify-content:space-between;
+      font-size:10px;font-weight:900;letter-spacing:.04em;
+    }
+    .scale-labels button{
+      background:none;border:0;padding:0;text-align:left;cursor:pointer;
+      color:var(--muted2);font:inherit;
+    }
+    .scale-labels button.active.green{color:#047857}
+    .scale-labels button.active.orange{color:#c2410c}
+    .scale-labels button.active.red{color:#b91c1c}
+    .scale-labels button.active.darkred{color:#7f1d1d}
+    .content{display:flex;flex-direction:column;flex:1;min-width:0}
+    .card-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
+    .daymark{font-size:12px;font-weight:900;color:#7c7c80;text-transform:uppercase;letter-spacing:.06em}
+    .date{
+      margin-bottom:8px;font-size:12px;font-weight:900;color:#7c7c80;text-transform:uppercase;letter-spacing:.06em
+    }
+    .paper{
+      margin:0;font-size:30px;font-weight:900;line-height:1.05;max-width:32ch;letter-spacing:-0.02em;
+    }
+    .board,.time,.confidence,.conf-val{
+      font-size:14px;font-weight:700;color:var(--muted)
+    }
+    .board{margin-top:12px}
+    .time{margin-top:8px}
+    .confidence{
+      margin-top:14px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--muted2)
+    }
+    .conf-val{margin-top:4px;font-size:14px;font-weight:900}
+    .conf-val.green{color:#047857}
+    .conf-val.orange{color:#c2410c}
+    .conf-val.red{color:#b91c1c}
+    .conf-val.darkred{color:#7f1d1d}
+    .bottom{margin-top:auto;padding-top:18px}
+    .bottom .count-box{margin-top:0}
+    @media (max-width: 1200px){
+      .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      h1{font-size:42px}
+    }
+    @media (max-width: 900px){
+      .top{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr}
+      h1{font-size:36px}
+      .bar{grid-template-columns:1fr}
+      .paper{font-size:24px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="panel">
+        <div class="eyebrow">A-Level Exam Dashboard</div>
+        <h1>All your exams, in one clean view.</h1>
+        <div class="sub">Edexcel Maths, Further Maths, Economics A, and AQA Physics with Engineering Physics.</div>
+        <div class="filters" id="filters"></div>
+      </div>
+      <div class="panel">
+        <div class="next-title">Next exam</div>
+        <div id="nextExam"></div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <div class="search">
+        <input id="searchInput" placeholder="Search paper, board, or subject" />
+      </div>
+      <button class="reset" id="resetBtn">Reset</button>
+    </div>
+
+    <div class="showing" id="showing"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    const exams = [
+      { id: 1, subject: "Further Maths", paper: "Core Pure 1", board: "Edexcel", date: "2026-05-14", time: "13:30", theme: "fm" },
+      { id: 2, subject: "Economics", paper: "Paper 1: Markets and Business Behaviour", board: "Edexcel A", date: "2026-05-11", time: "09:00", theme: "econ" },
+      { id: 3, subject: "Further Maths", paper: "Core Pure 2", board: "Edexcel", date: "2026-05-21", time: "13:30", theme: "fm" },
+      { id: 4, subject: "Maths", paper: "Paper 1: Pure Mathematics 1", board: "Edexcel", date: "2026-06-03", time: "13:30", theme: "math" },
+      { id: 5, subject: "Physics", paper: "Paper 1", board: "AQA", date: "2026-05-20", time: "13:30", theme: "phys" },
+      { id: 6, subject: "Further Maths", paper: "Further Mechanics 1", board: "Edexcel", date: "2026-06-05", time: "13:30", theme: "fm" },
+      { id: 7, subject: "Economics", paper: "Paper 2: The National and Global Economy", board: "Edexcel A", date: "2026-05-18", time: "13:30", theme: "econ" },
+      { id: 8, subject: "Maths", paper: "Paper 2: Pure Mathematics 2", board: "Edexcel", date: "2026-06-11", time: "13:30", theme: "math" },
+      { id: 9, subject: "Physics", paper: "Paper 2", board: "AQA", date: "2026-06-01", time: "09:00", theme: "phys" },
+      { id: 10, subject: "Further Maths", paper: "Further Statistics 1", board: "Edexcel", date: "2026-06-12", time: "13:30", theme: "fm" },
+      { id: 11, subject: "Physics", paper: "Paper 3: Engineering Physics Option", board: "AQA", date: "2026-06-08", time: "09:00", theme: "phys" },
+      { id: 12, subject: "Economics", paper: "Paper 3: Microeconomics and Macroeconomics", board: "Edexcel A", date: "2026-06-04", time: "13:30", theme: "econ" },
+      { id: 13, subject: "Maths", paper: "Paper 3: Statistics and Mechanics", board: "Edexcel", date: "2026-06-18", time: "13:30", theme: "math" }
+    ];
+
+    const filters = ["All", "Maths", "Further Maths", "Economics", "Physics"];
+    const confidenceLevels = ["A*", "A", "B", "C", "D", "E", "F"];
+    const defaultConfidence = Object.fromEntries(exams.map(exam => [exam.id, "C"]));
+
+    let selectedSubject = "All";
+    let query = "";
+    let confidenceByExam = { ...defaultConfidence };
+
+    const filtersEl = document.getElementById("filters");
+    const searchInput = document.getElementById("searchInput");
+    const resetBtn = document.getElementById("resetBtn");
+    const showingEl = document.getElementById("showing");
+    const gridEl = document.getElementById("grid");
+    const nextExamEl = document.getElementById("nextExam");
+
+    function getExamTimestamp(dateStr, timeStr) {
+      return new Date(`${dateStr}T${timeStr}:00`).getTime();
+    }
+
+    function formatDate(dateStr) {
+      return new Intl.DateTimeFormat("en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(new Date(`${dateStr}T00:00:00`));
+    }
+
+    function formatTime(time) {
+      const [h, m] = time.split(":").map(Number);
+      const suffix = h >= 12 ? "PM" : "AM";
+      const hour12 = h % 12 || 12;
+      return `${hour12}:${String(m).padStart(2, "0")} ${suffix}`;
+    }
+
+    function getCountdownParts(dateStr, timeStr, nowMs = Date.now()) {
+      const diff = getExamTimestamp(dateStr, timeStr) - nowMs;
+      if (diff <= 0) return { isDone: true, days: 0, hours: 0, minutes: 0, seconds: 0 };
+      const totalSeconds = Math.floor(diff / 1000);
+      return {
+        isDone: false,
+        days: Math.floor(totalSeconds / 86400),
+        hours: Math.floor((totalSeconds % 86400) / 3600),
+        minutes: Math.floor((totalSeconds % 3600) / 60),
+        seconds: totalSeconds % 60
+      };
+    }
+
+    function daysUntil(dateStr, timeStr, nowMs = Date.now()) {
+      const diff = getExamTimestamp(dateStr, timeStr) - nowMs;
+      if (diff <= 0) return 0;
+      return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    }
+
+    function countdownText(dateStr, timeStr, nowMs = Date.now()) {
+      const c = getCountdownParts(dateStr, timeStr, nowMs);
+      return c.isDone ? "Done" : `${c.days}d ${c.hours}h ${c.minutes}m ${c.seconds}s`;
+    }
+
+    function getConfidenceIndex(level) {
+      return confidenceLevels.indexOf(level);
+    }
+
+    function getConfidenceTheme(level) {
+      const i = getConfidenceIndex(level);
+      if (i <= 1) return { key: "green", emoji: "😐" };
+      if (i <= 3) return { key: "orange", emoji: "😐" };
+      if (i === 4) return { key: "red", emoji: "☹️" };
+      return { key: "darkred", emoji: "💀" };
+    }
+
+    function getFilteredExams() {
+      const q = query.trim().toLowerCase();
+      return [...exams]
+        .filter(exam => selectedSubject === "All" ? true : exam.subject === selectedSubject)
+        .filter(exam => {
+          if (!q) return true;
+          return exam.subject.toLowerCase().includes(q)
+            || exam.paper.toLowerCase().includes(q)
+            || exam.board.toLowerCase().includes(q);
+        })
+        .sort((a, b) => getExamTimestamp(a.date, a.time) - getExamTimestamp(b.date, b.time));
+    }
+
+    function renderFilters() {
+      filtersEl.innerHTML = "";
+      filters.forEach(filter => {
+        const btn = document.createElement("button");
+        btn.className = `chip ${selectedSubject === filter ? "active" : ""} ${filter === "All" ? "all" : exams.find(e => e.subject === filter)?.theme || "all"}`;
+        btn.textContent = filter;
+        btn.addEventListener("click", () => {
+          selectedSubject = filter;
+          render();
+        });
+        filtersEl.appendChild(btn);
+      });
+    }
+
+    function renderNextExam(nowMs) {
+      const next = getFilteredExams().find(exam => getExamTimestamp(exam.date, exam.time) > nowMs);
+      if (!next) {
+        nextExamEl.innerHTML = `<div class="count-box" style="margin-top:0"><div class="meta">No upcoming exams in this filter.</div></div>`;
+        return;
+      }
+      nextExamEl.innerHTML = `
+        <div class="pill ${next.theme}">
+          <span class="dot" style="background:${themeDot(next.theme)}"></span>
+          ${next.subject}
+        </div>
+        <div class="next-paper">${next.paper}</div>
+        <div class="meta">${formatDate(next.date)}</div>
+        <div class="meta">${formatTime(next.time)}</div>
+        <div class="meta">${next.board}</div>
+        <div class="count-box">
+          <div class="count-label">Countdown</div>
+          <div class="count-value">${countdownText(next.date, next.time, nowMs)}</div>
+        </div>
+      `;
+    }
+
+    function themeDot(theme){
+      if(theme === "math") return "var(--math-dot)";
+      if(theme === "fm") return "var(--fm-dot)";
+      if(theme === "econ") return "var(--econ-dot)";
+      return "var(--phys-dot)";
+    }
+
+    function renderGrid(nowMs) {
+      const list = getFilteredExams();
+      showingEl.textContent = `${list.length} exam${list.length !== 1 ? "s" : ""} showing`;
+      gridEl.innerHTML = "";
+
+      list.forEach(exam => {
+        const confidence = confidenceByExam[exam.id] || "C";
+        const confTheme = getConfidenceTheme(confidence);
+        const c = getCountdownParts(exam.date, exam.time, nowMs);
+        const dayCount = daysUntil(exam.date, exam.time, nowMs);
+        const stepPercent = 100 / (confidenceLevels.length - 1);
+        const activeIndex = getConfidenceIndex(confidence);
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const scaleWrap = document.createElement("div");
+        scaleWrap.className = "scale-wrap";
+
+        const scale = document.createElement("div");
+        scale.className = "scale";
+
+        const rail = document.createElement("div");
+        rail.className = `rail ${confTheme.key}`;
+        scale.appendChild(rail);
+
+        confidenceLevels.forEach((level, index) => {
+          const point = document.createElement("button");
+          point.type = "button";
+          point.className = "scale-point";
+          point.style.top = `${index * stepPercent}%`;
+          point.setAttribute("aria-label", `Set confidence to ${level}`);
+          point.innerHTML = `<span></span>`;
+          point.addEventListener("click", () => {
+            confidenceByExam[exam.id] = level;
+            render();
+          });
+          scale.appendChild(point);
+        });
+
+        const thumb = document.createElement("div");
+        thumb.className = `thumb ${confTheme.key}`;
+        thumb.style.top = `${activeIndex * stepPercent}%`;
+        thumb.textContent = confTheme.emoji;
+        scale.appendChild(thumb);
+
+        const labels = document.createElement("div");
+        labels.className = "scale-labels";
+        confidenceLevels.forEach(level => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = level;
+          if (level === confidence) btn.className = `active ${confTheme.key}`;
+          btn.addEventListener("click", () => {
+            confidenceByExam[exam.id] = level;
+            render();
+          });
+          labels.appendChild(btn);
+        });
+
+        scaleWrap.appendChild(scale);
+        scaleWrap.appendChild(labels);
+
+        const content = document.createElement("div");
+        content.className = "content";
+        content.innerHTML = `
+          <div class="card-top">
+            <div class="pill ${exam.theme}">
+              <span class="dot" style="background:${themeDot(exam.theme)}"></span>
+              ${exam.subject}
+            </div>
+            <div class="daymark">${c.isDone ? "Completed" : `D-${dayCount}`}</div>
+          </div>
+          <div class="date">${formatDate(exam.date)}</div>
+          <h3 class="paper">${exam.paper}</h3>
+          <div class="board">${exam.board}</div>
+          <div class="time">${formatTime(exam.time)}</div>
+          <div class="confidence">Confidence</div>
+          <div class="conf-val ${confTheme.key}">${confidence}</div>
+          <div class="bottom">
+            <div class="count-box">
+              <div class="count-value" style="font-size:18px">${c.isDone ? "Done" : `${c.days}d ${c.hours}h ${c.minutes}m ${c.seconds}s`}</div>
+            </div>
+          </div>
+        `;
+
+        card.appendChild(scaleWrap);
+        card.appendChild(content);
+        gridEl.appendChild(card);
+      });
+    }
+
+    function render() {
+      const nowMs = Date.now();
+      renderFilters();
+      renderNextExam(nowMs);
+      renderGrid(nowMs);
+    }
+
+    function runSelfChecks() {
+      const fixedNow = new Date("2026-05-14T12:00:00").getTime();
+      const future = getCountdownParts("2026-05-15", "13:30", fixedNow);
+      console.assert(future.isDone === false, "Future exam should not be done");
+      console.assert(future.days === 1, "Countdown days should be 1");
+      console.assert(future.hours === 1, "Countdown hours should be 1");
+      console.assert(future.minutes === 30, "Countdown minutes should be 30");
+      console.assert(future.seconds === 0, "Countdown seconds should be 0");
+      console.assert(formatTime("13:30") === "1:30 PM", "13:30 should format to 1:30 PM");
+      console.assert(formatTime("09:00") === "9:00 AM", "09:00 should format to 9:00 AM");
+      console.assert(exams.find(e => e.id === 2).date === "2026-05-11", "Economics Paper 1 should be on 11 May");
+      console.assert(exams.find(e => e.id === 7).date === "2026-05-18", "Economics Paper 2 should be on 18 May");
+      console.assert(exams.find(e => e.id === 12).date === "2026-06-04", "Economics Paper 3 should be on 4 June");
+      console.assert(exams.find(e => e.id === 5).date === "2026-05-20", "Physics Paper 1 should be on 20 May");
+      console.assert(exams.find(e => e.id === 9).date === "2026-06-01", "Physics Paper 2 should be on 1 June");
+      console.assert(exams.find(e => e.id === 11).date === "2026-06-08", "Physics Paper 3 should be on 8 June");
+    }
+
+    searchInput.addEventListener("input", e => {
+      query = e.target.value;
+      render();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      selectedSubject = "All";
+      query = "";
+      searchInput.value = "";
+      render();
+    });
+
+    runSelfChecks();
+    render();
+    setInterval(render, 1000);
+  </script>
+</body>
+</html>
